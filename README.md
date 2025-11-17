@@ -1,8 +1,10 @@
 # Yushan Analytics Service
 
-> 📊 **Analytics Service for Yushan Webnovel Platform.** - Tracks user behavior, generates insights, and provides real-time analytics for the gamified web novel reading experience.
+> 📊 **Analytics Service for Yushan Platform (Phase 2 - Microservices)** - Tracks user behavior, generates insights, and provides real-time analytics for the gamified web novel reading experience.
 
-# Yushan Platform - Analytics Service Setup Guide
+## 📋 Overview
+
+Analytics Service is one of the main microservices of Yushan Platform (Phase 2), responsible for collecting and analyzing data. This service manages reading history, rankings, and platform metrics. Uses Redis to cache rankings and scheduled jobs to update rankings periodically.
 
 ## Architecture Overview
 
@@ -58,8 +60,8 @@ Before setting up the Analytics Service, ensure you have:
 
 ```bash
 # Clone the service registry repository
-git clone https://github.com/maugus0/yushan-platform-service-registry
-cd yushan-platform-service-registry
+git clone https://github.com/phutruonnttn/yushan-microservices-service-registry
+cd yushan-microservices-service-registry
 
 # Option 1: Run with Docker (Recommended)
 docker-compose up -d
@@ -78,8 +80,8 @@ docker-compose up -d
 ## Step 2: Clone the Analytics Service Repository
 
 ```bash
-git clone https://github.com/maugus0/yushan-analytics-service.git
-cd yushan-analytics-service
+git clone https://github.com/phutruonnttn/yushan-microservices-analytics-service.git
+cd yushan-microservices-analytics-service
 
 # Option 1: Run with Docker (Recommended)
 docker-compose up -d
@@ -117,57 +119,51 @@ Instances currently registered with Eureka:
 ### Health Check
 - **GET** `/api/v1/health` - Service health status
 
-### Event Tracking
-- **POST** `/api/v1/analytics/events` - Track user events (reads, clicks, sessions)
-- **POST** `/api/v1/analytics/events/batch` - Batch event tracking
+### Ranking
+- **GET** `/api/v1/ranking/novel` - Get novel ranking (with pagination, filters by category, sort by view/vote, time range)
+- **GET** `/api/v1/ranking/user` - Get user ranking (with pagination, time range)
+- **GET** `/api/v1/ranking/author` - Get author ranking (with pagination, sort by novelNum/view/vote, time range)
+- **GET** `/api/v1/ranking/novel/{novelId}/rank` - Get novel's best rank across all categories
+- **POST** `/api/v1/ranking/update` - Manually trigger ranking update (ADMIN)
 
-### User Analytics
-- **GET** `/api/v1/analytics/users/{userId}/summary` - Get user analytics summary
-- **GET** `/api/v1/analytics/users/{userId}/reading-stats` - Get reading statistics
-- **GET** `/api/v1/analytics/users/{userId}/engagement` - Get engagement metrics
+### History (Reading History)
+- **POST** `/api/v1/history/novels/{novelId}/chapters/{chapterId}` - Add or update viewing history
+- **GET** `/api/v1/history` - Get user's viewing history (with pagination)
+- **DELETE** `/api/v1/history/{id}` - Delete a history record
+- **DELETE** `/api/v1/history/clear` - Clear all user's history
 
-### Content Analytics
-- **GET** `/api/v1/analytics/novels/{novelId}/stats` - Get novel statistics
-- **GET** `/api/v1/analytics/novels/{novelId}/readers` - Get reader demographics
-- **GET** `/api/v1/analytics/novels/{novelId}/trends` - Get trending metrics
-
-### Platform Analytics
-- **GET** `/api/v1/analytics/platform/dashboard` - Platform-wide dashboard metrics
-- **GET** `/api/v1/analytics/platform/active-users` - Active users count
-- **GET** `/api/v1/analytics/platform/popular-content` - Most popular content
-
-### Reports
-- **GET** `/api/v1/analytics/reports/daily` - Generate daily analytics report
-- **GET** `/api/v1/analytics/reports/weekly` - Generate weekly analytics report
-- **GET** `/api/v1/analytics/reports/monthly` - Generate monthly analytics report
+### Analytics (Admin Only)
+- **GET** `/api/v1/admin/analytics/users/trends` - Get user activity trends (with date range, period, filters)
+- **GET** `/api/v1/admin/analytics/reading/activity` - Get reading activity trends (with date range, period)
+- **GET** `/api/v1/admin/analytics/summary` - Get analytics summary (with date range, period)
+- **GET** `/api/v1/admin/analytics/platform/overview` - Get platform-wide statistics overview
+- **GET** `/api/v1/admin/analytics/platform/dau` - Get daily active users (with hourly breakdown)
+- **GET** `/api/v1/admin/analytics/platform/top-content` - Get top content (novels, authors, categories)
 
 ---
 
 ## Key Features
 
-### 📈 Real-Time Analytics
-- Track user reading sessions
-- Monitor engagement metrics
-- Real-time active user counts
-- Live trending content
+### 📊 Ranking System
+- Novel rankings (by views or votes, with category filters, time ranges)
+- User rankings (by experience points, with time ranges)
+- Author rankings (by novel count, views, or votes, with time ranges)
+- Best rank tracking for novels
+- Manual ranking update (admin)
 
-### 📊 Aggregated Metrics
-- Daily/Weekly/Monthly summaries
-- User retention analytics
-- Content popularity rankings
-- Reading time analytics
+### 📖 Reading History
+- Track user reading progress (novel and chapter)
+- View reading history with pagination
+- Delete individual history records
+- Clear all history
 
-### 🎯 User Behavior Tracking
-- Page views and chapter reads
-- Time spent on content
-- Navigation patterns
-- Feature usage statistics
-
-### 📉 Performance Metrics
-- API response times
-- Service health monitoring
-- Error rate tracking
-- System resource usage
+### 📈 Analytics Dashboard (Admin)
+- User activity trends analysis
+- Reading activity trends
+- Comprehensive analytics summary
+- Platform-wide statistics overview
+- Daily active users (DAU) with hourly breakdown
+- Top content analysis (novels, authors, categories)
 
 ---
 
@@ -175,11 +171,9 @@ Instances currently registered with Eureka:
 
 The Analytics Service uses the following key entities:
 
-- **UserEvent** - Individual user interaction events
-- **ReadingSession** - User reading session data
-- **ContentMetrics** - Aggregated content statistics
-- **UserMetrics** - Aggregated user statistics
-- **PlatformMetrics** - Platform-wide metrics
+- **Ranking** - Ranking data for novels, users, and authors
+- **History** - User reading history (novel and chapter tracking)
+- **Analytics** - Aggregated analytics data for platform insights
 
 ---
 
@@ -267,5 +261,14 @@ The Analytics Service communicates with:
 
 ---
 
-## License
+## 📄 License
+
 This project is part of the Yushan Platform ecosystem.
+
+## 🔗 Links
+
+- **API Gateway**: [yushan-microservices-api-gateway](https://github.com/phutruonnttn/yushan-microservices-api-gateway)
+- **Service Registry**: [yushan-microservices-service-registry](https://github.com/phutruonnttn/yushan-microservices-service-registry)
+- **Config Server**: [yushan-microservices-config-server](https://github.com/phutruonnttn/yushan-microservices-config-server)
+- **Platform Documentation**: [yushan-platform-docs](https://github.com/phutruonnttn/yushan-platform-docs) - Complete documentation for all phases
+- **Phase 2 Architecture**: See [Phase 2 Microservices Architecture](https://github.com/phutruonnttn/yushan-platform-docs/blob/main/docs/phase2-microservices/PHASE2_MICROSERVICES_ARCHITECTURE.md)
