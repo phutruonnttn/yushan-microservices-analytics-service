@@ -3,7 +3,7 @@ package com.yushan.analytics_service.service;
 import com.yushan.analytics_service.client.ContentServiceClient;
 import com.yushan.analytics_service.client.EngagementServiceClient;
 import com.yushan.analytics_service.client.UserServiceClient;
-import com.yushan.analytics_service.dao.AnalyticsMapper;
+import com.yushan.analytics_service.repository.AnalyticsRepository;
 import com.yushan.analytics_service.dto.AnalyticsRequestDTO;
 import com.yushan.analytics_service.dto.AnalyticsSummaryResponseDTO;
 import com.yushan.analytics_service.dto.AnalyticsTrendResponseDTO;
@@ -27,7 +27,7 @@ import java.util.List;
 public class AnalyticsService {
 
     @Autowired
-    private AnalyticsMapper analyticsMapper;
+    private AnalyticsRepository analyticsRepository;
 
     @SuppressWarnings("unused") // Reserved for future user data fetching
     @Autowired
@@ -60,7 +60,7 @@ public class AnalyticsService {
         }
 
         List<AnalyticsTrendResponseDTO.TrendDataPoint> dataPoints = 
-            analyticsMapper.getUserActivityTrends(startDate, endDate, period);
+            analyticsRepository.getUserActivityTrends(startDate, endDate, period);
 
         // Calculate growth rates
         calculateGrowthRates(dataPoints);
@@ -108,7 +108,7 @@ public class AnalyticsService {
         }
 
         List<ReadingActivityResponseDTO.ActivityDataPoint> dataPoints = 
-            analyticsMapper.getReadingActivityTrends(startDate, endDate, period);
+            analyticsRepository.getReadingActivityTrends(startDate, endDate, period);
 
         ReadingActivityResponseDTO response = new ReadingActivityResponseDTO();
         response.setPeriod(period);
@@ -165,9 +165,9 @@ public class AnalyticsService {
         response.setPeriod(request.getPeriod());
 
         // Get metrics from local analytics database
-        Long activeUsers = analyticsMapper.getActiveUserCount(startDate, endDate);
-        Long uniqueNovels = analyticsMapper.getUniqueNovelsRead(startDate, endDate);
-        Long readingSessions = analyticsMapper.getTotalReadingSessions(startDate, endDate);
+        Long activeUsers = analyticsRepository.getActiveUserCount(startDate, endDate);
+        Long uniqueNovels = analyticsRepository.getUniqueNovelsRead(startDate, endDate);
+        Long readingSessions = analyticsRepository.getTotalReadingSessions(startDate, endDate);
 
         response.setActiveUsers(activeUsers);
         response.setUniqueNovelsRead(uniqueNovels);
@@ -182,15 +182,15 @@ public class AnalyticsService {
         Date previousEndDate = new Date(startDate.getTime() - 1);
         
         // User growth rate
-        Long previousActiveUsers = analyticsMapper.getActiveUserCount(previousStartDate, previousEndDate);
+        Long previousActiveUsers = analyticsRepository.getActiveUserCount(previousStartDate, previousEndDate);
         response.setUserGrowthRate(calculateGrowthRate(previousActiveUsers, activeUsers));
         
         // Novel growth rate
-        Long previousNovels = analyticsMapper.getUniqueNovelsRead(previousStartDate, previousEndDate);
+        Long previousNovels = analyticsRepository.getUniqueNovelsRead(previousStartDate, previousEndDate);
         response.setNovelGrowthRate(calculateGrowthRate(previousNovels, uniqueNovels));
         
         // Session growth rate
-        Long previousSessions = analyticsMapper.getTotalReadingSessions(previousStartDate, previousEndDate);
+        Long previousSessions = analyticsRepository.getTotalReadingSessions(previousStartDate, previousEndDate);
         response.setSessionGrowthRate(calculateGrowthRate(previousSessions, readingSessions));
 
         // Get engagement statistics from engagement service
@@ -236,10 +236,10 @@ public class AnalyticsService {
         Date veryOldDate = yearCal.getTime();
 
         // Get activity statistics from local database
-        response.setDailyActiveUsers(analyticsMapper.getDailyActiveUsers(today));
-        response.setWeeklyActiveUsers(analyticsMapper.getWeeklyActiveUsers(weekStart, today));
-        response.setMonthlyActiveUsers(analyticsMapper.getMonthlyActiveUsers(monthStart, today));
-        response.setTotalReadingSessions(analyticsMapper.getTotalReadingSessions(veryOldDate, today));
+        response.setDailyActiveUsers(analyticsRepository.getDailyActiveUsers(today));
+        response.setWeeklyActiveUsers(analyticsRepository.getWeeklyActiveUsers(weekStart, today));
+        response.setMonthlyActiveUsers(analyticsRepository.getMonthlyActiveUsers(monthStart, today));
+        response.setTotalReadingSessions(analyticsRepository.getTotalReadingSessions(veryOldDate, today));
 
         // Get total novels from content service
         try {
@@ -283,24 +283,24 @@ public class AnalyticsService {
 
         DailyActiveUsersResponseDTO response = new DailyActiveUsersResponseDTO();
         response.setDate(date);
-        response.setDau(analyticsMapper.getDailyActiveUsers(date));
+        response.setDau(analyticsRepository.getDailyActiveUsers(date));
 
         // Calculate weekly and monthly active users
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         cal.add(Calendar.DATE, -7);
         Date weekStart = cal.getTime();
-        response.setWau(analyticsMapper.getWeeklyActiveUsers(weekStart, date));
+        response.setWau(analyticsRepository.getWeeklyActiveUsers(weekStart, date));
 
         cal = Calendar.getInstance();
         cal.setTime(date);
         cal.add(Calendar.MONTH, -1);
         Date monthStart = cal.getTime();
-        response.setMau(analyticsMapper.getMonthlyActiveUsers(monthStart, date));
+        response.setMau(analyticsRepository.getMonthlyActiveUsers(monthStart, date));
 
         // Get hourly breakdown
         List<DailyActiveUsersResponseDTO.ActivityDataPoint> hourlyData = 
-            analyticsMapper.getHourlyActiveUsers(date);
+            analyticsRepository.getHourlyActiveUsers(date);
         response.setHourlyBreakdown(hourlyData);
 
         return response;
@@ -318,7 +318,7 @@ public class AnalyticsService {
         response.setDate(new Date());
 
         // Get most read novels from local database
-        List<Integer> topNovelIds = analyticsMapper.getMostReadNovelIds(limit);
+        List<Integer> topNovelIds = analyticsRepository.getMostReadNovelIds(limit);
         
         // Fetch novel details from content service
         List<TopContentResponseDTO.TopNovel> topNovels = Collections.emptyList();
@@ -338,7 +338,7 @@ public class AnalyticsService {
         response.setTopNovels(topNovels);
 
         // Get most active users
-        // List<UUID> topUserIds = analyticsMapper.getMostActiveUserIds(limit);
+        // List<UUID> topUserIds = analyticsRepository.getMostActiveUserIds(limit);
         // TODO: Fetch user details from user service and convert to authors
         // For now, return empty lists
         response.setTopAuthors(Collections.emptyList());

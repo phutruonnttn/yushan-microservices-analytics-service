@@ -2,7 +2,7 @@ package com.yushan.analytics_service.service;
 
 import com.yushan.analytics_service.client.ContentServiceClient;
 import com.yushan.analytics_service.client.UserServiceClient;
-import com.yushan.analytics_service.dao.HistoryMapper;
+import com.yushan.analytics_service.repository.HistoryRepository;
 import com.yushan.analytics_service.dto.ApiResponse;
 import com.yushan.analytics_service.dto.ChapterDTO;
 import com.yushan.analytics_service.dto.HistoryResponseDTO;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class HistoryService {
 
     @Autowired
-    private HistoryMapper historyMapper;
+    private HistoryRepository historyRepository;
 
     @Autowired
     private ContentServiceClient contentServiceClient;
@@ -73,13 +73,13 @@ public class HistoryService {
         } catch (Exception e) {
             throw new ResourceNotFoundException("Chapter not found with id: " + chapterId);
         }
-        History existingHistory = historyMapper.selectByUserAndNovel(userId, novelId);
+        History existingHistory = historyRepository.findByUserAndNovel(userId, novelId);
 
         if (existingHistory != null) {
             // Update existing record
             existingHistory.setChapterId(chapterId);
             existingHistory.setUpdateTime(new Date());
-            historyMapper.updateByPrimaryKeySelective(existingHistory);
+            historyRepository.save(existingHistory);
         } else {
             // Create new record
             History newHistory = new History();
@@ -90,7 +90,7 @@ public class HistoryService {
             Date now = new Date();
             newHistory.setCreateTime(now);
             newHistory.setUpdateTime(now);
-            historyMapper.insertSelective(newHistory);
+            historyRepository.save(newHistory);
         }
     }
 
@@ -100,8 +100,8 @@ public class HistoryService {
     @Transactional(readOnly = true)
     public PageResponseDTO<HistoryResponseDTO> getUserHistory(UUID userId, int page, int size) {
         int offset = page * size;
-        long totalElements = historyMapper.countByUserId(userId);
-        List<History> histories = historyMapper.selectByUserIdWithPagination(userId, offset, size);
+        long totalElements = historyRepository.countByUserId(userId);
+        List<History> histories = historyRepository.findByUserIdWithPagination(userId, offset, size);
 
         if (histories.isEmpty()) {
             return new PageResponseDTO<>(Collections.emptyList(), totalElements, page, size);
@@ -165,18 +165,18 @@ public class HistoryService {
      * Delete a single history record
      */
     public void deleteHistory(UUID userId, Integer historyId) {
-        History history = historyMapper.selectByPrimaryKey(historyId);
+        History history = historyRepository.findById(historyId);
         if (history == null || !history.getUserId().equals(userId)) {
             throw new ResourceNotFoundException("History record not found or you don't have permission to delete it.");
         }
-        historyMapper.deleteByPrimaryKey(historyId);
+        historyRepository.delete(historyId);
     }
 
     /**
      * Clear all user history
      */
     public void clearHistory(UUID userId) {
-        historyMapper.deleteByUserId(userId);
+        historyRepository.deleteByUserId(userId);
     }
 
     private HistoryResponseDTO convertToRichDTO(
