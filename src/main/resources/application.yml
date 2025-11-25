@@ -150,6 +150,11 @@ management:
     tags:
       application: ${spring.application.name}
 
+# Gateway HMAC Configuration for request signature verification
+gateway:
+  hmac:
+    secret: ${GATEWAY_HMAC_SECRET:yushan-gateway-hmac-secret-key-for-request-signature-2024}
+
 # Logging Configuration
 logging:
   level:
