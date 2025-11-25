@@ -1,6 +1,7 @@
 package com.yushan.analytics_service.config;
 
 import com.yushan.analytics_service.security.CustomMethodSecurityExpressionHandler;
+import com.yushan.analytics_service.security.GatewayAuthenticationFilter;
 import com.yushan.analytics_service.security.JwtAuthenticationEntryPoint;
 import com.yushan.analytics_service.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
+    @Autowired
+    private GatewayAuthenticationFilter gatewayAuthenticationFilter;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -88,6 +92,10 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
+                // Add Gateway filter first (for gateway-validated requests)
+                // Then add JWT filter (for backward compatibility with direct service calls or inter-service calls)
+                // JWT validation is primarily handled at Gateway level, but services can still validate JWT for backward compatibility
+                .addFilterBefore(gatewayAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
