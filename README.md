@@ -226,12 +226,60 @@ Once this basic setup is working:
 
 ---
 
+## 🔄 Resilience & Fault Tolerance
+
+### Circuit Breaker (Resilience4j)
+
+The Analytics Service implements Circuit Breaker pattern for all inter-service calls to prevent cascading failures:
+
+**Feign Clients with Circuit Breaker**:
+- ✅ **ContentServiceClient**: 11 methods protected with Circuit Breaker and fallback methods
+- ✅ **UserServiceClient**: 3 methods protected with Circuit Breaker and fallback methods
+- ✅ **GamificationServiceClient**: 3 methods protected with Circuit Breaker and fallback methods
+- ✅ **EngagementServiceClient**: 4 methods protected with Circuit Breaker and fallback methods
+
+**Configuration**:
+```yaml
+resilience4j:
+  circuitbreaker:
+    instances:
+      content-service:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+      user-service:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      gamification-service:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      engagement-service:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      content-service:
+        maxAttempts: 3
+        waitDuration: 1000ms
+```
+
+**Fallback Strategy**: All Feign client methods have fallback methods that return default/empty responses when services are unavailable, ensuring graceful degradation and preventing analytics queries from failing due to downstream service issues.
+
 ## Performance Tips
 1. **Event Batching**: Use batch endpoints for high-volume event tracking
 2. **Caching**: Enable Redis caching for frequently accessed metrics
 3. **Data Retention**: Implement policies to archive old data
 4. **Indexing**: Ensure proper database indexes on timestamp and user_id columns
 5. **Async Processing**: Use asynchronous processing for non-critical analytics
+6. **Circuit Breaker**: ✅ Implemented for all inter-service calls to prevent cascading failures
 
 ---
 

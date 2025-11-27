@@ -3,7 +3,10 @@ package com.yushan.analytics_service.client;
 import com.yushan.analytics_service.config.FeignAuthConfig;
 import com.yushan.analytics_service.dto.ApiResponse;
 import com.yushan.analytics_service.dto.PageResponseDTO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,9 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(
         name = "engagement-service",
         url = "${services.engagement.url:http://yushan-engagement-service:8084}",
-        configuration = FeignAuthConfig.class
+        configuration = FeignAuthConfig.class,
+        fallback = EngagementServiceClient.EngagementServiceFallback.class
 )
 public interface EngagementServiceClient {
+
+    Logger log = LoggerFactory.getLogger(EngagementServiceClient.class);
 
     @GetMapping("/api/v1/reviews/novel/{novelId}/rating-stats")
     ApiResponse<RatingStats> getNovelRatingStats(@PathVariable("novelId") Integer novelId);
@@ -67,5 +73,39 @@ public interface EngagementServiceClient {
         public Long pendingReports;
         public Long resolvedReports;
         public Long flaggedComments;
+    }
+
+
+    /**
+     * Fallback class for EngagementServiceClient.
+     * This class will be instantiated if the engagement-service is down or responses with an error.
+     */
+    @Component
+    class EngagementServiceFallback implements EngagementServiceClient {
+        private static final Logger logger = LoggerFactory.getLogger(EngagementServiceFallback.class);
+
+        @Override
+        public ApiResponse<RatingStats> getNovelRatingStats(Integer novelId) {
+            logger.error("Circuit breaker opened for engagement-service. Falling back for getNovelRatingStats request with {} id.", novelId);
+            return ApiResponse.error(503, "Engagement service temporarily unavailable");
+        }
+
+        @Override
+        public ApiResponse<PageResponseDTO<Review>> getNovelReviews(Integer novelId, Integer page, Integer size) {
+            logger.error("Circuit breaker opened for engagement-service. Falling back for getNovelReviews request with {} id.", novelId);
+            return ApiResponse.error(503, "Engagement service temporarily unavailable");
+        }
+
+        @Override
+        public ApiResponse<CommentStatistics> getChapterCommentStats(Integer chapterId) {
+            logger.error("Circuit breaker opened for engagement-service. Falling back for getChapterCommentStats request with {} id.", chapterId);
+            return ApiResponse.error(503, "Engagement service temporarily unavailable");
+        }
+
+        @Override
+        public ApiResponse<ModerationStatistics> getModerationStatistics() {
+            logger.error("Circuit breaker opened for engagement-service. Falling back for getModerationStatistics request.");
+            return ApiResponse.error(503, "Engagement service temporarily unavailable");
+        }
     }
 }

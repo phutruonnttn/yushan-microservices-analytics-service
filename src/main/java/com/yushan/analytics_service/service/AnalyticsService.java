@@ -194,16 +194,13 @@ public class AnalyticsService {
         response.setSessionGrowthRate(calculateGrowthRate(previousSessions, readingSessions));
 
         // Get engagement statistics from engagement service
-        try {
-            ApiResponse<EngagementServiceClient.ModerationStatistics> stats = 
-                    engagementServiceClient.getModerationStatistics();
-            if (stats != null && stats.getCode() != null && stats.getCode().equals(200) && stats.getData() != null) {
-                response.setTotalComments(stats.getData().totalComments);
-                // Reviews count would need a separate endpoint
-                response.setTotalReviews(0L);
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch engagement statistics: {}", e.getMessage());
+        ApiResponse<EngagementServiceClient.ModerationStatistics> stats = 
+                engagementServiceClient.getModerationStatistics();
+        if (stats != null && stats.getCode() != null && stats.getCode().equals(200) && stats.getData() != null) {
+            response.setTotalComments(stats.getData().totalComments);
+            // Reviews count would need a separate endpoint
+            response.setTotalReviews(0L);
+        } else {
             response.setTotalComments(0L);
             response.setTotalReviews(0L);
         }
@@ -242,29 +239,19 @@ public class AnalyticsService {
         response.setTotalReadingSessions(analyticsRepository.getTotalReadingSessions(veryOldDate, today));
 
         // Get total novels from content service
-        try {
-            ApiResponse<Long> novelCountResponse = contentServiceClient.getNovelCount();
-            if (novelCountResponse != null && novelCountResponse.getCode() != null && novelCountResponse.getCode().equals(200) && novelCountResponse.getData() != null) {
-                response.setTotalNovels(novelCountResponse.getData());
-            } else {
-                response.setTotalNovels(0L);
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch novel count from content service: {}", e.getMessage());
+        ApiResponse<Long> novelCountResponse = contentServiceClient.getNovelCount();
+        if (novelCountResponse != null && novelCountResponse.getCode() != null && novelCountResponse.getCode().equals(200) && novelCountResponse.getData() != null) {
+            response.setTotalNovels(novelCountResponse.getData());
+        } else {
             response.setTotalNovels(0L);
         }
 
         // Get engagement statistics
-        try {
-            ApiResponse<EngagementServiceClient.ModerationStatistics> stats = 
-                    engagementServiceClient.getModerationStatistics();
-            if (stats != null && stats.getCode() != null && stats.getCode().equals(200) && stats.getData() != null) {
-                response.setTotalComments(stats.getData().totalComments);
-            } else {
-                response.setTotalComments(0L);
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch engagement statistics: {}", e.getMessage());
+        ApiResponse<EngagementServiceClient.ModerationStatistics> stats = 
+                engagementServiceClient.getModerationStatistics();
+        if (stats != null && stats.getCode() != null && stats.getCode().equals(200) && stats.getData() != null) {
+            response.setTotalComments(stats.getData().totalComments);
+        } else {
             response.setTotalComments(0L);
         }
 
@@ -323,16 +310,12 @@ public class AnalyticsService {
         // Fetch novel details from content service
         List<TopContentResponseDTO.TopNovel> topNovels = Collections.emptyList();
         if (!topNovelIds.isEmpty()) {
-            try {
-                ApiResponse<List<NovelDetailResponseDTO>> novelsResponse = 
-                    contentServiceClient.getNovelsBatch(topNovelIds);
-                if (novelsResponse != null && novelsResponse.getCode() != null && novelsResponse.getCode().equals(200) && novelsResponse.getData() != null) {
-                    topNovels = novelsResponse.getData().stream()
-                        .map(this::convertToTopNovel)
-                        .toList();
-                }
-            } catch (Exception e) {
-                log.error("Error fetching top novels from content service: {}", e.getMessage());
+            ApiResponse<List<NovelDetailResponseDTO>> novelsResponse = 
+                contentServiceClient.getNovelsBatch(topNovelIds);
+            if (novelsResponse != null && novelsResponse.getCode() != null && novelsResponse.getCode().equals(200) && novelsResponse.getData() != null) {
+                topNovels = novelsResponse.getData().stream()
+                    .map(this::convertToTopNovel)
+                    .toList();
             }
         }
         response.setTopNovels(topNovels);
