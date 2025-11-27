@@ -130,12 +130,12 @@ class GlobalExceptionHandlerTest {
         Exception exception = new Exception("Generic error occurred");
 
         ResponseEntity<ApiResponse<String>> response = 
-                globalExceptionHandler.handleGlobalException(exception);
+                globalExceptionHandler.handleException(exception);
 
         assertNotNull(response);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), response.getBody().getCode());
-        assertTrue(response.getBody().getMessage().contains("An unexpected error occurred"));
+        assertTrue(response.getBody().getMessage().contains("System error"));
     }
 }
 

@@ -79,12 +79,15 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(HttpStatus.CONFLICT.value(), ex.getMessage()));
     }
 
+    /**
+     * handle general exception
+     */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<String>> handleGlobalException(Exception ex) {
-        ex.printStackTrace();
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                        "An unexpected error occurred: " + ex.getMessage()));
+    public ResponseEntity<ApiResponse<String>> handleException(Exception e) {
+        ApiResponse<String> errorResponse = ApiResponse.error(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+            "System error: " + e.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }

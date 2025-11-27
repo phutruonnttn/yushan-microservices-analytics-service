@@ -54,8 +54,8 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
 
-      # Config Server Configuration - DISABLED
-      SPRING_CLOUD_CONFIG_ENABLED: false
+      # Config Server Configuration - ENABLED
+      SPRING_CLOUD_CONFIG_ENABLED: true
 
       # Database Configuration
       DB_USERNAME: ${DB_USERNAME:-yushan_analytics}
